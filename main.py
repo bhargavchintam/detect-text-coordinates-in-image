@@ -11,10 +11,11 @@ def detect_text(path, keyword=''):
     """
     
     from google.cloud import vision
-    import io, os
+    import io
     import numpy as np
 
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = r'cp-vision-905c8b772ee7.json'
+    # google-cloud-vision reads GOOGLE_APPLICATION_CREDENTIALS itself; the client
+    # picks it up from the environment, no hardcoded path needed here.
     client = vision.ImageAnnotatorClient()
 
     with io.open(path, 'rb') as image_file:
@@ -29,5 +30,8 @@ def detect_text(path, keyword=''):
         if text.description.strip() == keyword:
             vertices = np.array([[vertex.x, vertex.y]
                         for vertex in text.bounding_poly.vertices])
-            print(text.description, sum(vertices[:,:1])/4, sum(vertices[:,1:])/4)
-    return sum(vertices[:,:1])/4, sum(vertices[:,1:])/4
+            x, y = float(vertices[:, 0].mean()), float(vertices[:, 1].mean())
+            print(text.description, x, y)
+            return x, y
+
+    raise ValueError(f"keyword {keyword!r} not found in {path}")
